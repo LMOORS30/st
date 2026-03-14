@@ -1,34 +1,72 @@
 st - simple terminal
---------------------
+====================
 st is a simple terminal emulator for X which sucks less.
 
+Heavily modified st build for my daily use. All patches inspected
+refactored and fully integrated. Liberal changes to the source code
+driven by personal preference. Keyboard shortcuts documented in the
+manual and other relevant functionality listed below.
 
-Requirements
-------------
-In order to build st you need the Xlib header files.
+credit
+------
+fork of <https://st.suckless.org>.
 
-
-Installation
-------------
-Edit config.mk to match your local setup (st is installed into
-the /usr/local namespace by default).
-
-Afterwards enter the following command to build and install st (if
-necessary as root):
-
-    make clean install
-
-
-Running st
-----------
-If you did not install st with make clean install, you must compile
-the st terminfo entry with the following command:
-
-    tic -sx st.info
-
-See the man page for additional details.
-
-Credits
+install
 -------
-Based on Aurélien APTEL <aurelien dot aptel at gmail dot com> bt source code.
+`sudo make install clean`
 
+manual
+------
+`man st`
+
+patch
+-----
+- [gruvbox-material](https://st.suckless.org/patches/gruvbox-material)
+  color scheme
+
+- [vertcenter](https://st.suckless.org/patches/vertcenter)
+  vertical center
+
+- [delkey](https://st.suckless.org/patches/delkey)
+  delete key
+
+- [spoiler](https://st.suckless.org/patches/spoiler)
+  invisible text selection
+
+- [boxdraw](https://st.suckless.org/patches/boxdraw)
+  line rendering consistency
+
+- [title_parsing_fix](https://st.suckless.org/patches/title_parsing_fix)
+  window title semicolons
+
+- [csi_22_23](https://st.suckless.org/patches/csi_22_23)
+  window title stack
+  + code refactor
+
+- [undercurl](https://st.suckless.org/patches/undercurl)
+  underline extensions
+  + less memory usage
+  + csi parsing fix
+  + custom render
+
+- [scrollback](https://st.suckless.org/patches/scrollback)
+  history buffer
+  + scrollback mark
+  + custom ringbuffer
+  + scroll hide and clear
+  + selection compatibility
+  + resize compatibility
+  + lazy allocation
+
+- [externalpipe](https://st.suckless.org/patches/externalpipe)
+  terminal content pipe
+  + command line option
+  + scrollback compatibility
+
+- [columnredraw](https://st.suckless.org/patches/columnredraw)
+  clipped text persistence
+  + scrollback compatibility
+
+- cursor restore
+  + multiple registers
+  + scrollback compatibility

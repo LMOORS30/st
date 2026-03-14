@@ -4,21 +4,19 @@
 #include <sys/types.h>
 
 /* macros */
-#define MIN(a, b)		((a) < (b) ? (a) : (b))
-#define MAX(a, b)		((a) < (b) ? (b) : (a))
-#define LEN(a)			(sizeof(a) / sizeof(a)[0])
-#define BETWEEN(x, a, b)	((a) <= (x) && (x) <= (b))
+#define DIV(n, d)           (((n) + ((d) / 2)) / (d))
 #define DIVCEIL(n, d)		(((n) + ((d) - 1)) / (d))
 #define DEFAULT(a, b)		(a) = (a) ? (a) : (b)
 #define LIMIT(x, a, b)		(x) = (x) < (a) ? (a) : (x) > (b) ? (b) : (x)
-#define ATTRCMP(a, b)		((a).mode != (b).mode || (a).fg != (b).fg || \
-				(a).bg != (b).bg)
-#define TIMEDIFF(t1, t2)	((t1.tv_sec-t2.tv_sec)*1000 + \
-				(t1.tv_nsec-t2.tv_nsec)/1E6)
+#define ATTRCMP(a, b)		((a).mode != (b).mode || (a).fg != (b).fg || (a).bg != (b).bg)
+#define TIMEDIFF(t1, t2)	((t1.tv_sec-t2.tv_sec) * 1000 + (t1.tv_nsec-t2.tv_nsec) / 1E6)
 #define MODBIT(x, set, bit)	((set) ? ((x) |= (bit)) : ((x) &= ~(bit)))
 
 #define TRUECOLOR(r,g,b)	(1 << 24 | (r) << 16 | (g) << 8 | (b))
 #define IS_TRUECOL(x)		(1 << 24 & (x))
+#define TRUERED(x)      (((x) & 0xff0000) >> 8)
+#define TRUEGREEN(x)    (((x) & 0xff00))
+#define TRUEBLUE(x)     (((x) & 0xff) << 8)
 
 enum glyph_attribute {
 	ATTR_NULL       = 0,
@@ -33,6 +31,9 @@ enum glyph_attribute {
 	ATTR_WRAP       = 1 << 8,
 	ATTR_WIDE       = 1 << 9,
 	ATTR_WDUMMY     = 1 << 10,
+	ATTR_MARKED     = 1 << 11,
+	ATTR_BOXDRAW    = 1 << 12,
+	ATTR_UNDERCURL  = 1 << 13,
 	ATTR_BOLD_FAINT = ATTR_BOLD | ATTR_FAINT,
 };
 
@@ -63,8 +64,9 @@ typedef uint_least32_t Rune;
 typedef struct {
 	Rune u;           /* character code */
 	ushort mode;      /* attribute flags */
-	uint32_t fg;      /* foreground  */
-	uint32_t bg;      /* background  */
+	uint32_t fg;      /* foreground */
+	uint32_t bg;      /* background */
+	uint32_t uc;      /* underline */
 } Glyph;
 
 typedef Glyph *Line;
@@ -77,14 +79,27 @@ typedef union {
 	const char *s;
 } Arg;
 
-void die(const char *, ...);
 void redraw(void);
 void draw(void);
 
+void kscrollhide(const Arg *);
+void kscrollshow(const Arg *);
+void kscrollclear(const Arg *);
+void kscrollprev(const Arg *);
+void kscrollnext(const Arg *);
+void kscrolldown(const Arg *);
+void kscrollup(const Arg *);
+
+void externalpipe(const Arg *);
 void printscreen(const Arg *);
 void printsel(const Arg *);
 void sendbreak(const Arg *);
 void toggleprinter(const Arg *);
+
+void poptitle(void);
+void pushtitle(void);
+void resettitle(void);
+void settitle(char *);
 
 int tattrset(int);
 void tnew(int, int);
@@ -96,8 +111,6 @@ size_t ttyread(void);
 void ttyresize(int, int);
 void ttywrite(const char *, size_t, int);
 
-void resettitle(void);
-
 void selclear(void);
 void selinit(void);
 void selstart(int, int, int);
@@ -107,9 +120,8 @@ char *getsel(void);
 
 size_t utf8encode(Rune, char *);
 
-void *xmalloc(size_t);
-void *xrealloc(void *, size_t);
-char *xstrdup(const char *);
+int isboxdraw(Rune);
+ushort boxdrawindex(const Glyph *);
 
 /* config.h globals */
 extern char *utmp;
@@ -119,8 +131,10 @@ extern char *vtiden;
 extern wchar_t *worddelimiters;
 extern int allowaltscreen;
 extern int allowwindowops;
+extern size_t histsize;
 extern char *termname;
-extern unsigned int tabspaces;
-extern unsigned int defaultfg;
-extern unsigned int defaultbg;
-extern unsigned int defaultcs;
+extern uint tabspaces;
+extern uint defaultfg;
+extern uint defaultbg;
+extern uint defaultuc;
+extern uint defaultcs;

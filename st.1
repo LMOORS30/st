@@ -14,6 +14,8 @@ st \- simple terminal
 .IR name ]
 .RB [ \-o
 .IR iofile ]
+.RB [ \-p
+.IR pipefile ]
 .RB [ \-T
 .IR title ]
 .RB [ \-t
@@ -38,6 +40,8 @@ st \- simple terminal
 .IR name ]
 .RB [ \-o
 .IR iofile ]
+.RB [ \-p
+.IR pipefile ]
 .RB [ \-T
 .IR title ]
 .RB [ \-t
@@ -81,6 +85,13 @@ writes all the I/O to
 This feature is useful when recording st sessions. A value of "-" means
 standard output.
 .TP
+.BI \-p " pipefile"
+sets the
+.I pipefile
+used for
+.B Ctrl\-Shift\-P\.
+This feature is useful for history processing. Defaults to "/tmp/stpipe".
+.TP
 .BI \-T " title"
 defines the window title (default 'st').
 .TP
@@ -117,61 +128,89 @@ prints version information to stderr, then exits.
 .BI \-e " command " [ " arguments " "... ]"
 st executes
 .I command
-instead of the shell.  If this is used it
+instead of the shell. If this is used it
 .B must be the last option
 on the command line, as in xterm / rxvt.
 This option is only intended for compatibility,
 and all the remaining arguments are used as a command
 even without it.
-.SH SHORTCUTS
+.SH USAGE
 .TP
 .B Break
 Send a break in the serial line.
 Break key is obtained in PC keyboards
 pressing at the same time control and pause.
 .TP
-.B Ctrl-Print Screen
+.B Ctrl\-Print
 Toggle if st should print to the
 .I iofile.
 .TP
-.B Shift-Print Screen
+.B Shift\-Print
 Print the full screen to the
 .I iofile.
 .TP
-.B Print Screen
+.B Print
 Print the selection to the
 .I iofile.
 .TP
-.B Ctrl-Shift-Page Up
+.B Ctrl\-Shift\-P
+Write the history buffer
+and screen to the
+.I pipefile.
+.TP
+.B Ctrl\-Shift\-Plus
 Increase font size.
 .TP
-.B Ctrl-Shift-Page Down
+.B Ctrl\-Shift\-Minus
 Decrease font size.
 .TP
-.B Ctrl-Shift-Home
+.B Ctrl\-Shift\-Backspace
 Reset to default font size.
 .TP
-.B Ctrl-Shift-y
+.B Ctrl\-Shift\-y
 Paste from primary selection (middle mouse button).
 .TP
-.B Ctrl-Shift-c
+.B Ctrl\-Shift\-c
 Copy the selected text to the clipboard selection.
 .TP
-.B Ctrl-Shift-v
+.B Ctrl\-Shift\-v
 Paste from the clipboard selection.
+.TP
+.B Shift\-Up
+Scroll up 3 lines.
+.TP
+.B Shift\-Down
+Scroll down 3 lines.
+.TP
+.B Ctrl\-Up
+Scroll up a full screen minus 3 lines.
+.TP
+.B Ctrl\-Down
+Scroll down a full screen minus 3 lines.
+.TP
+.B Ctrl\-Shift\-Up
+Scroll up to the first "\\e[ m" escape sequence,
+or to the top of the buffer if none present.
+.TP
+.B Ctrl\-Shift\-Down
+Scroll down to the first "\\e[ m" escape sequence,
+or to the bottom of the buffer if none present.
+.TP
+.B Alt\-Up
+Move all lines on the screen to the history buffer,
+leaving the screen empty.
+.TP
+.B Alt\-Down
+Move lines from the history buffer to the screen,
+reversing the effect of Alt\-Up.
+.TP
+.B Ctrl\-Shift\-L
+Clear the history not currently shown.
 .SH CUSTOMIZATION
-.B st
-can be customized by creating a custom config.h and (re)compiling the source
+st is customized by creating a custom config.h and (re)compiling the source
 code. This keeps it fast, secure and simple.
-.SH AUTHORS
-See the LICENSE file for the authors.
-.SH LICENSE
-See the LICENSE file for the terms of redistribution.
 .SH SEE ALSO
 .BR tabbed (1),
 .BR utmp (1),
 .BR stty (1),
 .BR scroll (1)
-.SH BUGS
-See the TODO file in the distribution.
-

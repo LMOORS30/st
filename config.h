@@ -5,8 +5,8 @@
  *
  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
  */
-static char *font = "Liberation Mono:pixelsize=12:antialias=true:autohint=true";
-static int borderpx = 2;
+static char *font = "FiraMono Nerd Font:pixelsize=14";
+static int borderpx = 1;
 
 /*
  * What program is execed by st depends of these precedence rules:
@@ -25,7 +25,7 @@ char *stty_args = "stty raw pass8 nl -echo -iexten -cstopb 38400";
 /* identification sequence returned in DA and DECID */
 char *vtiden = "\033[?6c";
 
-/* Kerning / character bounding-box multipliers */
+/* kerning / character bounding-box multipliers */
 static float cwscale = 1.0;
 static float chscale = 1.0;
 
@@ -37,14 +37,16 @@ static float chscale = 1.0;
 wchar_t *worddelimiters = L" ";
 
 /* selection timeouts (in milliseconds) */
-static unsigned int doubleclicktimeout = 300;
-static unsigned int tripleclicktimeout = 600;
+static uint doubleclicktimeout = 300;
+static uint tripleclicktimeout = 600;
 
 /* alt screens */
 int allowaltscreen = 1;
 
-/* allow certain non-interactive (insecure) window operations such as:
-   setting the clipboard text */
+/*
+ * allow certain non-interactive (insecure) window operations such as:
+ * setting the clipboard text
+ */
 int allowwindowops = 0;
 
 /*
@@ -57,21 +59,32 @@ static double minlatency = 2;
 static double maxlatency = 33;
 
 /*
- * blinking timeout (set to 0 to disable blinking) for the terminal blinking
- * attribute.
+ * blinking timeout for the terminal blinking attribute. Use 0 to disable
  */
-static unsigned int blinktimeout = 800;
+static uint blinktimeout = 0;
 
 /*
  * thickness of underline and bar cursors
  */
-static unsigned int cursorthickness = 2;
+static uint cursorthickness = 2;
 
 /*
- * bell volume. It must be a value between -100 and 100. Use 0 for disabling
- * it
+ * bell volume. Must be a value between -100 and 100. Use 0 to disable
  */
 static int bellvolume = 0;
+
+/*
+ * Render most of the lines/blocks characters without using the font for
+ * perfect alignment between cells (U2500 - U259F except dashes/diagonals).
+ * Bold affects lines thickness if boxdraw_bold is not 0. Italic is ignored.
+ * Braille (U28XX):  1: render as adjacent "pixels",  0: use font.
+ */
+int boxdraw = 1;
+int boxdraw_bold = 1;
+int boxdraw_braille = 1;
+
+/* terminal history buffer size */
+size_t histsize = 20000;
 
 /* default TERM value */
 char *termname = "st-256color";
@@ -87,52 +100,46 @@ char *termname = "st-256color";
  *
  * Secondly make sure your kernel is not expanding tabs. When running `stty
  * -a` »tab0« should appear. You can tell the terminal to not expand tabs by
- *  running following command:
+ * running following command:
  *
  *	stty tabs
  */
-unsigned int tabspaces = 8;
+uint tabspaces = 4;
 
 /* Terminal colors (16 first used in escape sequence) */
 static const char *colorname[] = {
 	/* 8 normal colors */
-	"black",
-	"red3",
-	"green3",
-	"yellow3",
-	"blue2",
-	"magenta3",
-	"cyan3",
-	"gray90",
+	"#1e1e1e",
+	"#ea6962",
+	"#a9b665",
+	"#d8a657",
+	"#7daea3",
+	"#d3869b",
+	"#89b482",
+	"#d4be98",
 
 	/* 8 bright colors */
-	"gray50",
-	"red",
-	"green",
-	"yellow",
-	"#5c5cff",
-	"magenta",
-	"cyan",
-	"white",
+	"#928374",
+	"#ef938e",
+	"#bbc585",
+	"#e1bb7e",
+	"#9dc2ba",
+	"#e1acbb",
+	"#a7c7a2",
+	"#e2d3ba",
 
 	[255] = 0,
-
-	/* more colors can be added after 255 to use with DefaultXX */
-	"#cccccc",
-	"#555555",
-	"gray90", /* default foreground colour */
-	"black", /* default background colour */
 };
-
 
 /*
  * Default colors (colorname index)
- * foreground, background, cursor, reverse cursor
+ * foreground, background, underline, cursor, reverse cursor
  */
-unsigned int defaultfg = 258;
-unsigned int defaultbg = 259;
-unsigned int defaultcs = 256;
-static unsigned int defaultrcs = 257;
+uint defaultfg = 7;
+uint defaultbg = 0;
+uint defaultuc = 7;
+uint defaultcs = 7;
+static uint defaultrcs = 0;
 
 /*
  * Default shape of cursor
@@ -141,27 +148,26 @@ static unsigned int defaultrcs = 257;
  * 6: Bar ("|")
  * 7: Snowman ("☃")
  */
-static unsigned int cursorshape = 2;
+static uint cursorshape = 2;
 
 /*
  * Default columns and rows numbers
  */
-
-static unsigned int cols = 80;
-static unsigned int rows = 24;
+static uint cols = 80;
+static uint rows = 24;
 
 /*
  * Default colour and shape of the mouse cursor
  */
-static unsigned int mouseshape = XC_xterm;
-static unsigned int mousefg = 7;
-static unsigned int mousebg = 0;
+static uint mouseshape = XC_xterm;
+static uint mousefg = 7;
+static uint mousebg = 0;
 
 /*
  * Color used to display font attributes when fontconfig selected a font which
  * doesn't match the ones requested.
  */
-static unsigned int defaultattr = 11;
+static uint defaultattr = 11;
 
 /*
  * Force mouse select/shortcuts while mask is active (when MODE_MOUSE is set).
@@ -177,15 +183,15 @@ static uint forcemousemod = ShiftMask;
 static MouseShortcut mshortcuts[] = {
 	/* mask                 button   function        argument       release */
 	{ XK_ANY_MOD,           Button2, selpaste,       {.i = 0},      1 },
-	{ ShiftMask,            Button4, ttysend,        {.s = "\033[5;2~"} },
-	{ XK_ANY_MOD,           Button4, ttysend,        {.s = "\031"} },
-	{ ShiftMask,            Button5, ttysend,        {.s = "\033[6;2~"} },
-	{ XK_ANY_MOD,           Button5, ttysend,        {.s = "\005"} },
+	{ XK_ANY_MOD,           Button4, kscrollup,      {.i = 1},      0 },
+	{ XK_ANY_MOD,           Button5, kscrolldown,    {.i = 1},      0 },
 };
 
 /* Internal keyboard shortcuts. */
-#define MODKEY Mod1Mask
 #define TERMMOD (ControlMask|ShiftMask)
+
+static char *pipecmd[6] = { "/bin/sh", "-c", "cat > $1", "sh", "/tmp/stpipe", NULL };
+static char **opt_pipe = &pipecmd[4];
 
 static Shortcut shortcuts[] = {
 	/* mask                 keysym          function        argument */
@@ -193,14 +199,24 @@ static Shortcut shortcuts[] = {
 	{ ControlMask,          XK_Print,       toggleprinter,  {.i =  0} },
 	{ ShiftMask,            XK_Print,       printscreen,    {.i =  0} },
 	{ XK_ANY_MOD,           XK_Print,       printsel,       {.i =  0} },
-	{ TERMMOD,              XK_Prior,       zoom,           {.f = +1} },
-	{ TERMMOD,              XK_Next,        zoom,           {.f = -1} },
-	{ TERMMOD,              XK_Home,        zoomreset,      {.f =  0} },
+	{ TERMMOD,              XK_P,           externalpipe,   {.v = pipecmd} },
+	{ TERMMOD,              XK_plus,        zoom,           {.f = +1} },
+	{ TERMMOD,              XK_underscore,  zoom,           {.f = -1} },
+	{ TERMMOD,              XK_BackSpace,   zoomreset,      {.f =  0} },
 	{ TERMMOD,              XK_C,           clipcopy,       {.i =  0} },
 	{ TERMMOD,              XK_V,           clippaste,      {.i =  0} },
 	{ TERMMOD,              XK_Y,           selpaste,       {.i =  0} },
 	{ ShiftMask,            XK_Insert,      selpaste,       {.i =  0} },
 	{ TERMMOD,              XK_Num_Lock,    numlock,        {.i =  0} },
+	{ TERMMOD,              XK_L,           kscrollclear,   {.i =  0} },
+	{ Mod1Mask,             XK_Up,          kscrollhide,    {.i =  0} },
+	{ Mod1Mask,             XK_Down,        kscrollshow,    {.i =  0} },
+	{ TERMMOD,              XK_Up,          kscrollprev,    {.i =  0} },
+	{ TERMMOD,              XK_Down,        kscrollnext,    {.i =  0} },
+	{ ShiftMask,            XK_Up,          kscrollup,      {.i = +3} },
+	{ ShiftMask,            XK_Down,        kscrolldown,    {.i = +3} },
+	{ ControlMask,          XK_Up,          kscrollup,      {.i = -3} },
+	{ ControlMask,          XK_Down,        kscrolldown,    {.i = -3} },
 };
 
 /*
@@ -278,7 +294,7 @@ static Key key[] = {
 	{ XK_KP_Delete,     ControlMask,    "\033[3;5~",    +1,    0},
 	{ XK_KP_Delete,     ShiftMask,      "\033[2K",      -1,    0},
 	{ XK_KP_Delete,     ShiftMask,      "\033[3;2~",    +1,    0},
-	{ XK_KP_Delete,     XK_ANY_MOD,     "\033[P",       -1,    0},
+	{ XK_KP_Delete,     XK_ANY_MOD,     "\033[3~",      -1,    0},
 	{ XK_KP_Delete,     XK_ANY_MOD,     "\033[3~",      +1,    0},
 	{ XK_KP_Multiply,   XK_ANY_MOD,     "\033Oj",       +2,    0},
 	{ XK_KP_Add,        XK_ANY_MOD,     "\033Ok",       +2,    0},
@@ -346,7 +362,7 @@ static Key key[] = {
 	{ XK_Delete,        ControlMask,    "\033[3;5~",    +1,    0},
 	{ XK_Delete,        ShiftMask,      "\033[2K",      -1,    0},
 	{ XK_Delete,        ShiftMask,      "\033[3;2~",    +1,    0},
-	{ XK_Delete,        XK_ANY_MOD,     "\033[P",       -1,    0},
+	{ XK_Delete,        XK_ANY_MOD,     "\033[3~",      -1,    0},
 	{ XK_Delete,        XK_ANY_MOD,     "\033[3~",      +1,    0},
 	{ XK_BackSpace,     XK_NO_MOD,      "\177",          0,    0},
 	{ XK_BackSpace,     Mod1Mask,       "\033\177",      0,    0},
